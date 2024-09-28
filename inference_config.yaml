@@ -1,0 +1,72 @@
+# logging options
+save_path: save_path
+project: my_project
+visualize: False
+name: test
+fold: 5
+model_path: my_model_path
+register: 0
+model: unicorn
+#feature sizes
+modality_embedding: 0
+input_dims: [768,768,768,768]
+input_dim:
+  resnet: 1024
+  retccl: 2048
+  ctranspath: 768
+
+# task definition
+task: multiclass
+target: TARGET
+num_classes: 5
+cohort: "DHZ"
+ext_cohorts: []
+clini_info: []
+seed: 42
+
+# model options
+subnetwork_name: transformer
+norm: raw
+feats: ctranspath
+num_tiles: -1
+pad_tiles: false
+criterion : CrossEntropyLoss
+# training options
+folds: 5
+num_epochs: 2
+optimizer: AdamW
+scheduler: null
+lr: 2.0e-05
+wd: 2.0e-05
+bs: 1
+accumulate_grad_batches: 16
+stop_criterion: loss
+resume: null
+debug: false
+stain_dropout: 0.7
+clini_info_dropout: 0.3
+num_workers: 16
+test_folder: /xxx/256px_ctranspath_0mpp_8xdown_normal
+# cohort data
+preview_dir: /xxx/tiling_previews_256px_0mpp_8xdown_normal/
+cohort_data:
+  DHZ:
+    targets: ['0', '1', '2', '3', '4']
+    clini_table: /xxx/Biobank.xlsx
+    slide_csv: ['/vk_filenames_2020_2.csv','/movat_filenames_2020_2.csv','/he_filenames_2020_2.csv',/evg_filenames_2020_2.csv']
+    cohort_features: ['ctranspath20_8','ctranspath20_8','ctranspath20_8','ctranspath20_8']
+    feature_dir: 
+      ctranspath20_8: /xxx/256px_ctranspath_0mpp_8.0xdown_normal/
+      ctranspath20_4: /xxx/256px_ctranspath_0mpp_4.0xdown_normal/
+      overlap20: /xxx/overlap/h5_files/256px_ctranspath_0mpp_8xdown_normal
+
+subnetwork:
+  transformer:
+    dim: 512
+    depth: 2
+    heads: 4
+    mlp_dim: 512
+    pool: 'cls'
+    dim_head: 64
+    dropout: 0.2
+    emb_dropout: 0.

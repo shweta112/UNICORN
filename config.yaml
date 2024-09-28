@@ -1,0 +1,70 @@
+# logging options
+save_dir: /
+project: test
+name: segment
+visualize: False
+register: 0
+modality_embedding: 0
+model: AttentionMIL
+input_dims: [768,768,768,768]
+#feature sizes
+input_dim:
+  resnet: 1024
+  retccl: 2048
+  ctranspath: 768
+
+# task definition
+task: multiclass
+target: TARGET
+num_classes: 5
+cohort: DHZ
+ext_cohorts: []
+clini_info: [] 
+seed: 42
+
+# model options
+subnetwork_name: transformer
+norm: raw
+feats: ctranspath
+num_tiles: -1
+pad_tiles: false
+criterion : CrossEntropyLoss
+
+# training options
+folds: 5
+num_epochs: 1
+optimizer: AdamW
+scheduler: null
+lr: 2.0e-05
+wd: 2.0e-05
+bs: 1
+accumulate_grad_batches: 16
+stop_criterion: loss
+resume: null
+debug: false
+stain_dropout: 0.75
+clini_info_dropout: 0.5
+num_workers: 16
+
+# cohort data
+preview_dir: "" #where preview images are saved, only needed for visualization
+cohort_data:
+  DHZ:
+    targets: ['0', '1', '2', '3', '4']
+    clini_table: segment.csv
+    slide_csv: ['vk_files_all.csv','movat_files_all.csv','he_files_all.csv','evg_files_all.csv']
+    cohort_features: ['ctranspath_all_8','ctranspath_all_8','ctranspath_all_8','ctranspath_all_8']
+    feature_dir: 
+      ctranspath_all_8: xxx/256px_ctranspath_0mpp_8xdown_normal/
+      ctranspath20_4: xxx/256px_ctranspath_0mpp_4.0xdown_normal/
+
+subnetwork:
+  transformer:
+    dim: 512
+    depth: 2
+    heads: 4
+    mlp_dim: 512
+    pool: 'cls'
+    dim_head: 64
+    dropout: 0.2
+    emb_dropout: 0.
