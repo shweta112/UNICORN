@@ -1,6 +1,6 @@
 # UNICORN: A Deep Learning Model for Integrating Multi-Stain Data in Histopathology
 
-The integration of multi-stain histopathology images using deep learning addresses challenges in digital histopathology, particularly data heterogeneity and missing data. This study presents UNICORN (UNiversal modality Integration Network for CORonary classificatioN), a multi-modal transformer model designed for atherosclerosis severity classification. Our two-stage architecture employs domain-specific expert modules and an aggregation expert module to effectively process multi-stain histopathology images.
+The integration of multi-stain histopathology images using deep learning addresses challenges in digital histopathology, particularly data heterogeneity and missing data. This study presents UNICORN (UNiversal modality Integration Network for CORonary classificatioN), a multi-modal transformer model designed for atherosclerosis severity classification. Our two-stage architecture employs domain-specific expert modules and an aggregation expert module to effectively process multi-stain histopathology images. The full preprint can be read [here](https://arxiv.org/abs/2409.17775v1).
 
 ### MISSION Biobank and UNICORN Architecture
 ![Figure 1](media_files/fig1_p1.png)
