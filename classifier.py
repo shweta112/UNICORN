@@ -225,16 +225,17 @@ class ClassifierLightning(pl.LightningModule):
         logits, features = self.forward(x)
         loss = self.criterion(logits, y1)
 
-        if  self.num_classes>2:
-            probs=F.softmax(logits,dim=1)            
-            preds = torch.argmax(probs, dim=1, keepdim=True)
-            y = torch.argmax(y1, dim=1, keepdim=True)
-            probs = probs.unsqueeze(-1)
+        # if  self.num_classes>2:
+        probs=F.softmax(logits,dim=1)
+        preds = torch.argmax(probs, dim=1, keepdim=True)
+        y = torch.argmax(y1, dim=1, keepdim=True)
+        probs = probs.unsqueeze(-1)
         
-        elif  self.num_classes==2:
-            probs=F.sigmoid(logits)
-            y=y1
-            preds=int((probs>0.5).item())
+        # elif  self.num_classes==2:
+        #     probs=F.sigmoid(logits)
+        #     y=y1
+        #     print(probs.size())
+        #     preds=int((probs>0.5).item())
             #probs = probs.unsqueeze(-1)
 
         self.acc_test(probs, y)
@@ -304,20 +305,24 @@ class ClassifierLightning(pl.LightningModule):
         self.outputs = pd.concat([self.outputs, outputs], ignore_index=True)
 
         if self.config.visualize:
-            staining_contrib_dict={}
+            try:
+                staining_contrib_dict={}
 
-            for filename,staining_contribution in zip(filenames,staining_contributions):
-                staining_contrib_dict[filename[0].split("_")[-1].replace(".h5","")]=staining_contribution
+                for filename,staining_contribution in zip(filenames,staining_contributions):
+                    staining_contrib_dict[filename[0].split("_")[-1].replace(".h5","")]=staining_contribution
 
-            staining_contrib_dict=normalize_dict_values(staining_contrib_dict)
-            patchwise_prediction=self.model.predict_single_patches(x)
-            class_attention,patchwise_class_prob_of_prediction,attentions_normalized=self.model.get_class_attention(attentions,patchwise_prediction,preds)
-            save_path_class_attention=self.attention_visualization(class_attention,batch,self.config,'class_attention_',plt.cm.viridis)
-            self.attention_visualization(patchwise_prediction,batch,self.config,"multiclass_",class_visualization=True)
-            self.attention_visualization(patchwise_class_prob_of_prediction,batch,self.config,"class_",plt.cm.viridis)
-            self.attention_visualization(attentions_normalized,batch,self.config,"attention_",plt.cm.viridis)
-            save_path_report = Path(self.config.save_path) / self.config.name/ "reports"
-            self.create_report_card(staining_contrib_dict,save_path_class_attention,patient,probs,save_path_report,y)
+                staining_contrib_dict=normalize_dict_values(staining_contrib_dict)
+                patchwise_prediction=self.model.predict_single_patches(x)
+                
+                class_attention,patchwise_class_prob_of_prediction,attentions_normalized=self.model.get_class_attention(attentions,patchwise_prediction,preds)
+                save_path_class_attention=self.attention_visualization(class_attention,batch,self.config,'class_attention_',plt.cm.viridis)
+                # self.attention_visualization(patchwise_prediction,batch,self.config,"multiclass_",class_visualization=False)
+                self.attention_visualization(patchwise_class_prob_of_prediction,batch,self.config,"class_",plt.cm.viridis)
+                self.attention_visualization(attentions_normalized,batch,self.config,"attention_",plt.cm.viridis)
+                save_path_report = Path(self.config.save_path) / self.config.name/ "reports"
+                self.create_report_card(staining_contrib_dict,save_path_class_attention,patient,probs,save_path_report,y)
+            except Exception as e:
+                print(f"Could not create report for patient {patient}: {repr(e)}")
 
 
 

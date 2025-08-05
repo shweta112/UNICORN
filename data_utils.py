@@ -152,6 +152,7 @@ class MILDatasetIndices(Dataset):
         features = []
         coords = []
         extraction_args = []
+        all_null = True
 
         for slide_path_key in slide_path_keys:
             h5_path = patient_data[slide_path_key]
@@ -165,6 +166,8 @@ class MILDatasetIndices(Dataset):
                 extraction_arg = json.loads(extraction_arg[()].decode("UTF-8"))
                 extraction_arg = replace_none_with_false(extraction_arg)
                 extraction_arg["original_scene_sizes"] = np.array(h5_file["slide_sizes"])
+                if feature.numel() != 0:
+                    all_null = False
             else:
                 extraction_arg={}
                 feature=torch.empty(0)
@@ -173,6 +176,9 @@ class MILDatasetIndices(Dataset):
             features.append(feature)
             coords.append(coord)
             extraction_args.append(extraction_arg)
+    
+        if all_null:
+            print(patient_data)
 
         for additional_info in self.clini_info:
             if patient_data[additional_info] is not None:
