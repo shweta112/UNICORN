@@ -225,17 +225,10 @@ class ClassifierLightning(pl.LightningModule):
         logits, features = self.forward(x)
         loss = self.criterion(logits, y1)
 
-        if  self.num_classes>2:
-            probs=F.softmax(logits,dim=1)            
-            preds = torch.argmax(probs, dim=1, keepdim=True)
-            y = torch.argmax(y1, dim=1, keepdim=True)
-            probs = probs.unsqueeze(-1)
-        
-        elif  self.num_classes==2:
-            probs=F.sigmoid(logits)
-            y=y1
-            preds=int((probs>0.5).item())
-            #probs = probs.unsqueeze(-1)
+        probs=F.softmax(logits,dim=1)            
+        preds = torch.argmax(probs, dim=1, keepdim=True)
+        y = torch.argmax(y1, dim=1, keepdim=True)
+        probs = probs.unsqueeze(-1)
 
         self.acc_test(probs, y)
 
@@ -317,7 +310,7 @@ class ClassifierLightning(pl.LightningModule):
             self.attention_visualization(patchwise_class_prob_of_prediction,batch,self.config,"class_",plt.cm.viridis)
             self.attention_visualization(attentions_normalized,batch,self.config,"attention_",plt.cm.viridis)
             save_path_report = Path(self.config.save_path) / self.config.name/ "reports"
-            self.create_report_card(staining_contrib_dict,save_path_class_attention,patient,probs,save_path_report,y)
+            self.create_report_card(staining_contrib_dict,save_path_class_attention,patient,probs,save_path_report,y,self.config.class_labels)
 
 
 

@@ -200,7 +200,7 @@ def main(cfg):
     plot_confusion_matrix(
         model_outputs["ground_truth"].values,
         model_outputs["predictions"].values,
-        ["AIT", "PIT", "EFA", "LFA", "CFA"],
+        cfg.class_labels,
         base_path,
         title= 'confusion matrix normal',
         wandb_run=wandb_run
@@ -208,7 +208,7 @@ def main(cfg):
     plot_confusion_matrix(
         model_outputs["ground_truth"].values,
         model_outputs["predictions"].values,
-        ["AIT", "PIT", "EFA", "LFA", "CFA"],
+        cfg.class_labels,
         base_path,
         normalize=False,
         wandb_run=wandb_run

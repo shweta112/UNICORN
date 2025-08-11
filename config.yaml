@@ -16,7 +16,8 @@ input_dim:
 # task definition
 task: multiclass
 target: TARGET
-num_classes: 5
+num_classes: 2
+class_labels: ['negative', 'positive']
 cohort: DHZ
 ext_cohorts: []
 clini_info: [] 
@@ -50,7 +51,7 @@ num_workers: 16
 preview_dir: "" #where preview images are saved, only needed for visualization
 cohort_data:
   DHZ:
-    targets: ['0', '1', '2', '3', '4']
+    targets: ['0', '1']
     clini_table: segment.csv
     slide_csv: ['vk_files_all.csv','movat_files_all.csv','he_files_all.csv','evg_files_all.csv']
     cohort_features: ['ctranspath_all_8','ctranspath_all_8','ctranspath_all_8','ctranspath_all_8']
