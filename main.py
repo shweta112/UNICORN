@@ -44,12 +44,7 @@ def main(cfg):
     performance_summaries = pd.DataFrame()
 
     patient_df = data.groupby("PATIENT").first().reset_index()
-    df_splits=split_dataframe_by_patient(patient_df,cfg.folds)
-
-    for i in range(cfg.folds):
-        (base_path /"folds"/ f"fold{i}").mkdir(parents=True, exist_ok=True)
-        test_fold = df_splits[(i + 4) % 5]
-        test_fold.to_csv(base_path /"folds"/ f"fold{i}"/ f"test_df.csv")
+    df_splits=split_dataframe_by_patient(patient_df,cfg.folds)        
     
     for i in range(cfg.folds):
         # training dataset
@@ -57,6 +52,8 @@ def main(cfg):
         eval_fold = df_splits[(i + 3) % 5]
         test_fold = df_splits[(i + 4) % 5]
         test_fold.to_csv(result_path / f"fold{i}_test_df.csv")
+        (base_path /"folds"/ f"fold{i}").mkdir(parents=True, exist_ok=True)
+        test_fold.to_csv(base_path /"folds"/ f"fold{i}"/ f"test_df.csv")
 
         train_dataset = Dataset(
             training_folds,
@@ -110,7 +107,7 @@ def main(cfg):
         )
 
 
-        cfg.loss_weight=get_loss_weighting(np.array((training_folds.TARGET.values),dtype=float))
+        cfg.loss_weight=get_loss_weighting(np.array((training_folds[cfg.target].values),dtype=float))
 
         model = ClassifierLightning(cfg)
 
@@ -231,7 +228,7 @@ if __name__ == "__main__":
     # Update the configuration with the values from the argument parser
     for arg_name, arg_value in vars(args).items():
         if arg_value is not None and arg_name != "config_file":
-            config[arg_name]["value"] = getattr(args, arg_name)
+            config[arg_name] = getattr(args, arg_name)
 
     print("\n--- load options ---")
     for name, value in sorted(config.items()):
