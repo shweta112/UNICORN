@@ -14,10 +14,11 @@ class Options:
         # task definition
         self.parser.add_argument('--task', type=str, help='training task in [binary, multiclass, multilabel]')
         self.parser.add_argument('--target', type=str, help='targets used for training')
-        self.parser.add_argument('--cohorts', nargs='+', type=str, help='cohort used for training')
+        self.parser.add_argument('--cohort', type=str, help='cohort used for training')
         self.parser.add_argument('--ext_cohorts', nargs='+', type=str, help='cohort used for external validation')
         self.parser.add_argument('--clini_info', type=bool, help='whether to use clinical information during training')
         self.parser.add_argument('--seed', type=int, help='random state for splitting the data')
+        self.parser.add_argument('--preview_dir', type=str, help='directory containing preview images for visualization')
         
         # model options
         self.parser.add_argument('--model', type=str, help='costum prefix for logging')

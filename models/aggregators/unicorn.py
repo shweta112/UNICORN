@@ -145,6 +145,7 @@ class MultiTransformer(nn.Module):
              dropout_list= generate_dropout_list(x,self.stain_dropout)
         else:
             dropout_list= [True]*len(x)
+        # print(len(x))
         for i, x_i in enumerate(x):
             if x_i is not None and dropout_list[i] and x_i.shape[1]>0:
                 x_i = self.basis_transformers[i](x_i).unsqueeze(0)

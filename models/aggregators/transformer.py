@@ -50,7 +50,7 @@ class Transformer(BaseAggregator):
             'cls', 'mean', 'max', False
         }, 'pool type must be either cls (class token), mean (mean pooling), max max pooling) or False (no subnetwork pooling)'
 
-        self.projection = nn.Sequential(nn.Linear(input_dim, 512, bias=True), nn.ReLU())
+        self.projection = nn.Sequential(nn.Linear(input_dim, dim, bias=True), nn.ReLU())
         self.mlp_head = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, num_classes))
         self.transformer = TransformerBlocks(dim, depth, heads, dim_head, mlp_dim, dropout)
         self.pool = pool
