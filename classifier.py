@@ -38,6 +38,7 @@ class ClassifierLightning(pl.LightningModule):
                 dim_head=subnetwork_cfg['dim_head'],
                 dropout=0.2,
                 num_base_networks=len(config.cohort_data[config.cohort]['slide_csv'])+len(config.clini_info),
+                dim_clini_info=len(config.clini_info),
                 stain_dropout=self.stain_dropout,
                 clini_info_dropout=self.clini_info_dropout,
                 heads=subnetwork_cfg['heads'],

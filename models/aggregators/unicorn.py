@@ -114,6 +114,7 @@ class MultiTransformer(nn.Module):
         dim_head=64,
         dropout=0.,
         num_base_networks=2,
+        dim_clini_info=0,
         stain_dropout=0.5,
         subnetworks,
         clini_info_dropout,
@@ -145,10 +146,10 @@ class MultiTransformer(nn.Module):
              dropout_list= generate_dropout_list(x,self.stain_dropout)
         else:
             dropout_list= [True]*len(x)
-        # print(len(x))
-        for i, x_i in enumerate(x):
+        for i, basis_transformer_i in enumerate(self.basis_transformers):
+            x_i = x[i]
             if x_i is not None and dropout_list[i] and x_i.shape[1]>0:
-                x_i = self.basis_transformers[i](x_i).unsqueeze(0)
+                x_i = basis_transformer_i(x_i).unsqueeze(0)
                 x_agg.append(x_i)
 
         x_agg = torch.cat(x_agg, dim=1)

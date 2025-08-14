@@ -44,16 +44,19 @@ def main(cfg):
     performance_summaries = pd.DataFrame()
 
     patient_df = data.groupby("PATIENT").first().reset_index()
-    df_splits=split_dataframe_by_patient(patient_df,cfg.folds)        
-    
+    df_splits=split_dataframe_by_patient(patient_df,cfg.folds)
+
+    for i in range(cfg.folds):
+        test_fold = df_splits[(i + 4) % 5]
+        (base_path /"folds"/ f"fold{i}").mkdir(parents=True, exist_ok=True)
+        test_fold.to_csv(base_path /"folds"/ f"fold{i}"/ f"test_df.csv")
+
     for i in range(cfg.folds):
         # training dataset
         training_folds = pd.concat([df_splits[(i + j) % 5] for j in range(3)])
         eval_fold = df_splits[(i + 3) % 5]
         test_fold = df_splits[(i + 4) % 5]
         test_fold.to_csv(result_path / f"fold{i}_test_df.csv")
-        (base_path /"folds"/ f"fold{i}").mkdir(parents=True, exist_ok=True)
-        test_fold.to_csv(base_path /"folds"/ f"fold{i}"/ f"test_df.csv")
 
         train_dataset = Dataset(
             training_folds,
