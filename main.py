@@ -232,7 +232,7 @@ if __name__ == "__main__":
     # Update the configuration with the values from the argument parser
     for arg_name, arg_value in vars(args).items():
         if arg_value is not None and arg_name != "config_file":
-            config[arg_name]["value"] = getattr(args, arg_name)
+            config[arg_name] = getattr(args, arg_name)
 
     print("\n--- load options ---")
     for name, value in sorted(config.items()):
