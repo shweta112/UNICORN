@@ -11,9 +11,6 @@ import re
 from sklearn.metrics import f1_score, accuracy_score
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-LABELS=["AIT", "PIT", "EFA", "LFA", "CFA"]
-
-
 def plot_confusion_matrix(
     gt,
     pred,
@@ -439,7 +436,7 @@ def concatenate_images(images):
     return concatenated_image
 
 
-def create_report_card(staining_contributions,vis_path, patient, probabilities, save_path, ground_truth,font_size = 30, whitespace_height = 200, target_width = 1024,border_left=50):
+def create_report_card(staining_contributions,vis_path, patient, probabilities, save_path, ground_truth, class_labels, font_size = 30, whitespace_height = 200, target_width = 1024,border_left=50):
     save_path.mkdir(exist_ok=True,parents=True)
     patient = patient[0]
     vis_path = Path(vis_path)
@@ -514,8 +511,8 @@ def create_report_card(staining_contributions,vis_path, patient, probabilities, 
     font_color_multi = 'green' if correct_prediction else 'red'
 
 
-    prediction_text = f"Predicted: {LABELS[predicted_label]}, {predicted_probability} % ({LABELS[second_predicted_label]}, {second_predicted_probability} %) "
-    gt_text=f"True Label: {LABELS[ground_truth.item()]}"
+    prediction_text = f"Predicted: {class_labels[predicted_label]}, {predicted_probability} % ({class_labels[second_predicted_label]}, {second_predicted_probability} %) "
+    gt_text=f"True Label: {class_labels[ground_truth.item()]}"
 
     text_x_position = 10
     text_y_position = 50

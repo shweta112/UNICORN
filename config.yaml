@@ -17,6 +17,7 @@ input_dim:
 task: multiclass
 target: TARGET
 num_classes: 5
+class_labels: ['AIT', 'PIT', 'EFA', 'LFA', 'CFA']
 cohort: DHZ
 ext_cohorts: []
 clini_info: [] 

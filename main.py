@@ -18,7 +18,6 @@ from plotting import plot_confusion_matrix, create_report
 from data_utils import MILDatasetIndices as Dataset
 from data_utils import get_cohort_df, split_dataframe_by_patient
 
-LABELS = ["AIT", "PIT", "EFA", "LFA", "CFA"]
 
 def main(cfg):
 
@@ -202,7 +201,7 @@ def main(cfg):
     plot_confusion_matrix(
         model_outputs["ground_truth"].values,
         model_outputs["predictions"].values,
-        LABELS,
+        cfg.class_labels,
         base_path,
         title= 'confusion matrix normal',
         wandb_run=wandb_run
@@ -210,7 +209,7 @@ def main(cfg):
     plot_confusion_matrix(
         model_outputs["ground_truth"].values,
         model_outputs["predictions"].values,
-        LABELS,
+        cfg.class_labels,
         base_path,
         normalize=False,
         wandb_run=wandb_run

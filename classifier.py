@@ -320,7 +320,7 @@ class ClassifierLightning(pl.LightningModule):
                 self.attention_visualization(patchwise_class_prob_of_prediction,batch,self.config,"class_",plt.cm.viridis)
                 self.attention_visualization(attentions_normalized,batch,self.config,"attention_",plt.cm.viridis)
                 save_path_report = Path(self.config.save_path) / self.config.name/ "reports"
-                self.create_report_card(staining_contrib_dict,save_path_class_attention,patient,probs,save_path_report,y)
+                self.create_report_card(staining_contrib_dict,save_path_class_attention,patient,probs,save_path_report,y,self.config.class_labels)
             except Exception as e:
                 print(f"Could not create report for patient {patient}: {repr(e)}")
 
