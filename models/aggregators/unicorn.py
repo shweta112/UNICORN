@@ -130,9 +130,9 @@ class MultiTransformer(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
         self.modality_embedding = nn.Parameter(torch.randn(1, num_base_networks, modality_embedding))
         self.transformer = TransformerBlocks(dim, depth, heads, dim_head, mlp_dim, dropout)
-        self.layer_norm = nn.LayerNorm(dim)
+        self.layer_norm = nn.LayerNorm(mlp_dim)
         self.register=register
-        self.linear=nn.Linear(dim, num_classes)
+        self.linear=nn.Linear(mlp_dim, num_classes)
         self.stain_dropout=stain_dropout
         self.clini_info_dropout=clini_info_dropout
 
