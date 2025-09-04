@@ -1,26 +1,25 @@
 # logging options
-save_dir: /
-project: test
-name: segment
+save_dir: ../UNICORN_ext_validation/unicorn_val_ablation
+save_path: ../UNICORN_ext_validation/unicorn_val/
+project: unicorn_val
+name: her_clini_info
 visualize: False
 register: 0
 modality_embedding: 0
-model: AttentionMIL
-input_dims: [768,768,768,768]
+model: unicorn
+input_dims: [768,768, 1, 1, 1, 1, 1, 1]
 #feature sizes
 input_dim:
-  resnet: 1024
-  retccl: 2048
   ctranspath: 768
 
 # task definition
 task: multiclass
-target: TARGET
+target: pCR
 num_classes: 2
 class_labels: ['negative', 'positive']
-cohort: DHZ
+cohort: HER
 ext_cohorts: []
-clini_info: [] 
+clini_info: ['Age', 'ratio', 'ER', 'ER%', 'PR', 'PR%'] 
 seed: 42
 
 # model options
@@ -33,7 +32,7 @@ criterion : CrossEntropyLoss
 
 # training options
 folds: 5
-num_epochs: 1
+num_epochs: 20
 optimizer: AdamW
 scheduler: null
 lr: 2.0e-05
@@ -43,21 +42,29 @@ accumulate_grad_batches: 16
 stop_criterion: loss
 resume: null
 debug: false
-stain_dropout: 0.75
-clini_info_dropout: 0.5
+stain_dropout: 0.0
+clini_info_dropout: 0.0
 num_workers: 16
 
 # cohort data
 preview_dir: "" #where preview images are saved, only needed for visualization
 cohort_data:
-  DHZ:
+  HER:
     targets: ['0', '1']
-    clini_table: segment.csv
-    slide_csv: ['vk_files_all.csv','movat_files_all.csv','he_files_all.csv','evg_files_all.csv']
-    cohort_features: ['ctranspath_all_8','ctranspath_all_8','ctranspath_all_8','ctranspath_all_8']
+    clini_table: data/impress/HER2.csv
+    slide_csv: ['data/impress/all_HER2_he.csv','data/impress/all_HER2_ihc.csv']
+    cohort_features: ['ctranspath_all_8','ctranspath_all_8']
     feature_dir: 
-      ctranspath_all_8: xxx/256px_ctranspath_0mpp_8xdown_normal/
-      ctranspath20_4: xxx/256px_ctranspath_0mpp_4.0xdown_normal/
+      ctranspath_all_8: ../UNICORN_ext_validation/ctranspath_features/HER2+_deid/h5_files/256px_ctranspath_0mpp_8.0xdown_normal
+      ctranspath_all_10x: ../UNICORN_ext_validation/ctranspath_features/HER2+_deid/h5_files/256px_ctranspath_1.0mpp_0.0xdown_normal
+  TNBC:
+    targets: ['0', '1']
+    clini_table: data/impress/TNBC.csv
+    slide_csv: ['data/impress/all_TNBC_he.csv','data/impress/all_TNBC_ihc.csv']
+    cohort_features: ['ctranspath_all_8','ctranspath_all_8']
+    feature_dir: 
+      ctranspath_all_8: ../UNICORN_ext_validation/ctranspath_features/TNBC_deid/h5_files/256px_ctranspath_0mpp_8.0xdown_normal
+      # ctranspath_all_10x: ../UNICORN_ext_validation/ctranspath_features/TNBC_deid/h5_files/256px_ctranspath_1.0mpp_0.0xdown_normal
 
 subnetwork:
   transformer:
@@ -69,3 +76,18 @@ subnetwork:
     dim_head: 64
     dropout: 0.2
     emb_dropout: 0.
+  perceiver:
+    num_freq_bands: 6
+    depth: 2
+    max_freq: 10.0
+    num_latents: 256
+    latent_dim: 512
+    cross_heads: 1
+    latent_heads: 8
+    cross_dim_head: 64
+    latent_dim_head: 64
+    attn_dropout: 0.1
+    ff_dropout: 0
+    weight_tie_layers: false
+    fourier_encode_data: true
+    self_per_cross_attn: 1

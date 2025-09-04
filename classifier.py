@@ -26,16 +26,23 @@ class ClassifierLightning(pl.LightningModule):
         self.stain_dropout=config.stain_dropout
         self.clini_info_dropout=config.clini_info_dropout
 
+        subnetwork_cfg = config.subnetwork[config.subnetwork_name]
+
         if config.model=="unicorn":
             subnetworks=get_networks(config,config.input_dims)
 
             self.model = MultiTransformer(
                 num_classes=config.num_classes,
-                mlp_dim=512,
+                dim=subnetwork_cfg['dim'],
+                mlp_dim=subnetwork_cfg['mlp_dim'],
+                dim_head=subnetwork_cfg['dim_head'],
                 dropout=0.2,
                 num_base_networks=len(config.cohort_data[config.cohort]['slide_csv'])+len(config.clini_info),
+                dim_clini_info=len(config.clini_info),
                 stain_dropout=self.stain_dropout,
                 clini_info_dropout=self.clini_info_dropout,
+                heads=subnetwork_cfg['heads'],
+                depth=subnetwork_cfg['depth'],
                 subnetworks=subnetworks,
                 register=config.register)
             
@@ -44,7 +51,7 @@ class ClassifierLightning(pl.LightningModule):
                 self.model = AttentionMIL(
                 num_classes=config.num_classes,
                 num_features=config.input_dims[0],
-                mlp_dim=256,
+                mlp_dim=subnetwork_cfg['mlp_dim'],
                 stain_dropout=self.stain_dropout,
                 clini_info=config.clini_info)
 
@@ -306,7 +313,7 @@ class ClassifierLightning(pl.LightningModule):
             patchwise_prediction=self.model.predict_single_patches(x)
             class_attention,patchwise_class_prob_of_prediction,attentions_normalized=self.model.get_class_attention(attentions,patchwise_prediction,preds)
             save_path_class_attention=self.attention_visualization(class_attention,batch,self.config,'class_attention_',plt.cm.viridis)
-            self.attention_visualization(patchwise_prediction,batch,self.config,"multiclass_",class_visualization=True)
+            # self.attention_visualization(patchwise_prediction,batch,self.config,"multiclass_",class_visualization=True)
             self.attention_visualization(patchwise_class_prob_of_prediction,batch,self.config,"class_",plt.cm.viridis)
             self.attention_visualization(attentions_normalized,batch,self.config,"attention_",plt.cm.viridis)
             save_path_report = Path(self.config.save_path) / self.config.name/ "reports"

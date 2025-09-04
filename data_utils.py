@@ -182,7 +182,7 @@ class MILDatasetIndices(Dataset):
             features.append(additional_feature.to(torch.float32))
 
         # create numeric labels from categorical labels
-        label = int(patient_data.TARGET)
+        label = int(patient_data[self.target_labels].iloc[0])
         label = torch.eye(self.num_classes)[label]  # .squeeze(0)
 
         

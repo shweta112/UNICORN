@@ -47,10 +47,10 @@ def main(cfg):
     df_splits=split_dataframe_by_patient(patient_df,cfg.folds)
 
     for i in range(cfg.folds):
-        (base_path /"folds"/ f"fold{i}").mkdir(parents=True, exist_ok=True)
         test_fold = df_splits[(i + 4) % 5]
+        (base_path /"folds"/ f"fold{i}").mkdir(parents=True, exist_ok=True)
         test_fold.to_csv(base_path /"folds"/ f"fold{i}"/ f"test_df.csv")
-    
+
     for i in range(cfg.folds):
         # training dataset
         training_folds = pd.concat([df_splits[(i + j) % 5] for j in range(3)])
@@ -110,7 +110,7 @@ def main(cfg):
         )
 
 
-        cfg.loss_weight=get_loss_weighting(np.array((training_folds.TARGET.values),dtype=float))
+        cfg.loss_weight=get_loss_weighting(np.array((training_folds[cfg.target].values),dtype=float))
 
         model = ClassifierLightning(cfg)
 
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     # Update the configuration with the values from the argument parser
     for arg_name, arg_value in vars(args).items():
         if arg_value is not None and arg_name != "config_file":
-            config[arg_name]["value"] = getattr(args, arg_name)
+            config[arg_name] = getattr(args, arg_name)
 
     print("\n--- load options ---")
     for name, value in sorted(config.items()):
