@@ -133,15 +133,19 @@ class MultiTransformer(nn.Module):
         self.transformer = TransformerBlocks(dim, depth, heads, dim_head, mlp_dim, dropout)
         self.layer_norm = nn.LayerNorm(dim)
         self.register=register
-        self.linear=nn.Linear(dim, num_classes)
+        self.linear=nn.Linear(dim + dim_clini_info, num_classes)
+        self.dim_clini_info=dim_clini_info
         self.stain_dropout=stain_dropout
         self.clini_info_dropout=clini_info_dropout
 
     def forward(self, x):
         #batchsize
         b=1
+        # print(len(x), x[-self.dim_clini_info].shape)
         x_agg = [] 
         cls_tokens = repeat(self.cls_token, '1 1 d -> b 1 d', b=b)
+        x_clini_info = torch.cat(x[-self.dim_clini_info:], dim=1)
+        # print(x_clini_info, x_clini_info.shape)
         if not self.test_mode:
              dropout_list= generate_dropout_list(x,self.stain_dropout)
         else:
@@ -157,6 +161,8 @@ class MultiTransformer(nn.Module):
         x = self.transformer(x)
 
         x_layer_norm=self.layer_norm(x[:,0])
+        # print(x_clini_info[:, :, 0].shape)
+        x_layer_norm=torch.cat((x_layer_norm, x_clini_info[:, :, 0]), dim=1)
         x=self.linear(x_layer_norm)
         return x,x_layer_norm
     
