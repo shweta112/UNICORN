@@ -2,6 +2,7 @@ from pathlib import Path
 import argparse
 import yaml
 import numpy as np
+from random import shuffle
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -18,45 +19,27 @@ from plotting import plot_confusion_matrix, create_report
 from data_utils import MILDatasetIndices as Dataset
 from data_utils import get_cohort_df, split_dataframe_by_patient
 
-def main(cfg):
 
-    pl.seed_everything(cfg.seed, workers=True)
-    base_path = Path(cfg.save_dir) 
-
-    base_path = base_path / cfg.name
-    model_path = base_path / "models"
-    fold_path = base_path / "folds"
-    result_path = base_path / "results"
-
-    base_path.mkdir(parents=True, exist_ok=True)
-    fold_path.mkdir(parents=True, exist_ok=True)
-    result_path.mkdir(parents=True, exist_ok=True)
-
-    print("\n--- load dataset ---")
-    data = get_cohort_df(cfg)
-    transform_clini_info(data,cfg,0.02,0.035)
-
+def loov(cfg, base_path, result_path, model_path, patient_df, model_outputs, performance_summaries):
     # --------------------------------------------------------
-    # k-fold cross validation
+    # leave one out cross validation
     # --------------------------------------------------------
+    # create as many splits as the number of patients
+    df_splits=split_dataframe_by_patient(patient_df, patient_df["PATIENT"].nunique())        
 
-    model_outputs = pd.DataFrame()
-    performance_summaries = pd.DataFrame()
+    for i in range(len(df_splits)):
+        # training dataset
+        non_test_splits = list(range(len(df_splits)))
+        non_test_splits.remove(i)
+        shuffle(non_test_splits)
+        last_idx_train_fold = int(0.7*len(non_test_splits))
 
-    patient_df = data.groupby("PATIENT").first().reset_index()
-    df_splits=split_dataframe_by_patient(patient_df,cfg.folds)
-
-    for i in range(cfg.folds):
-        test_fold = df_splits[(i + 4) % 5]
+        training_folds = pd.concat(df_splits[:last_idx_train_fold])
+        eval_fold = pd.concat(df_splits[last_idx_train_fold:])
+        test_fold = df_splits[i]
+        test_fold.to_csv(result_path / f"fold{i}_test_df.csv")
         (base_path /"folds"/ f"fold{i}").mkdir(parents=True, exist_ok=True)
         test_fold.to_csv(base_path /"folds"/ f"fold{i}"/ f"test_df.csv")
-
-    for i in range(cfg.folds):
-        # training dataset
-        training_folds = pd.concat([df_splits[(i + j) % 5] for j in range(3)])
-        eval_fold = df_splits[(i + 3) % 5]
-        test_fold = df_splits[(i + 4) % 5]
-        test_fold.to_csv(result_path / f"fold{i}_test_df.csv")
 
         train_dataset = Dataset(
             training_folds,
@@ -180,6 +163,175 @@ def main(cfg):
         performance_summaries = pd.concat([performance_summaries, results_df], ignore_index=True)
 
         wandb.finish()  # required for new wandb run in next fold
+    
+    return model_outputs
+
+
+def main(cfg):
+
+    pl.seed_everything(cfg.seed, workers=True)
+    base_path = Path(cfg.save_dir) 
+
+    base_path = base_path / cfg.name
+    model_path = base_path / "models"
+    fold_path = base_path / "folds"
+    result_path = base_path / "results"
+
+    base_path.mkdir(parents=True, exist_ok=True)
+    fold_path.mkdir(parents=True, exist_ok=True)
+    result_path.mkdir(parents=True, exist_ok=True)
+
+    print("\n--- load dataset ---")
+    data = get_cohort_df(cfg)
+    transform_clini_info(data,cfg,0.02,0.035)
+
+    model_outputs = pd.DataFrame()
+    performance_summaries = pd.DataFrame()
+
+    patient_df = data.groupby("PATIENT").first().reset_index()
+
+    if cfg.cv_mode == "loov":
+        model_outputs = loov(cfg, base_path, result_path, model_path, patient_df, model_outputs, performance_summaries)
+    else:
+        # --------------------------------------------------------
+        # k-fold cross validation
+        # --------------------------------------------------------
+        df_splits=split_dataframe_by_patient(patient_df,cfg.folds)
+
+        for i in range(cfg.folds):
+            test_fold = df_splits[(i + 4) % 5]
+            (base_path /"folds"/ f"fold{i}").mkdir(parents=True, exist_ok=True)
+            test_fold.to_csv(base_path /"folds"/ f"fold{i}"/ f"test_df.csv")
+
+        for i in range(cfg.folds):
+            # training dataset
+            training_folds = pd.concat([df_splits[(i + j) % 5] for j in range(3)])
+            eval_fold = df_splits[(i + 3) % 5]
+            test_fold = df_splits[(i + 4) % 5]
+            test_fold.to_csv(result_path / f"fold{i}_test_df.csv")
+
+            train_dataset = Dataset(
+                training_folds,
+                [cfg.target],
+                num_tiles=cfg.num_tiles,
+                pad_tiles=cfg.pad_tiles,
+                norm=cfg.norm,
+                num_classes=cfg.num_classes,
+                clini_info=cfg.clini_info
+            )
+
+            print(f"num training samples in fold {i}: {len(train_dataset)}")
+            train_dataloader = DataLoader(
+                dataset=train_dataset,
+                batch_size=cfg.bs,
+                shuffle=True,
+                num_workers=cfg.num_workers,
+                pin_memory=True,
+            )
+
+            # validation dataset
+            val_dataset = Dataset(
+                eval_fold, [cfg.target], num_classes=cfg.num_classes, norm=cfg.norm,clini_info=cfg.clini_info
+            )
+
+            print(f"num validation samples in fold {i}: {len(val_dataset)}")
+            val_dataloader = DataLoader(
+                dataset=val_dataset,
+                batch_size=1,
+                shuffle=False,
+                num_workers=cfg.num_workers,
+                pin_memory=True,
+            )
+
+            test_dataset = Dataset(
+                test_fold,
+                [cfg.target],
+                num_classes=cfg.num_classes,
+                norm=cfg.norm,
+                clini_info=cfg.clini_info
+            )
+
+            print(f"num test samples in fold {i}: {len(test_dataset)}")
+
+            test_dataloader = DataLoader(
+                dataset=test_dataset,
+                batch_size=1,
+                shuffle=False,
+                num_workers=cfg.num_workers,
+                pin_memory=True,
+            )
+
+
+            cfg.loss_weight=get_loss_weighting(np.array((training_folds[cfg.target].values),dtype=float))
+
+            model = ClassifierLightning(cfg)
+
+            logger = WandbLogger(
+                project=cfg.project,
+                config=cfg,
+                name=f"{cfg.name}_fold{i}",
+                save_dir=cfg.save_dir,
+                reinit=True,
+                settings=wandb.Settings(start_method="fork"),
+            )
+
+            csv_logger = CSVLogger(
+                save_dir=result_path,
+                name=f"fold{i}",
+            )
+
+
+            checkpoint_callback = ModelCheckpoint(
+                monitor="loss/val",
+                dirpath=model_path,
+                filename=f"best_model_{cfg.name}_fold{i}",
+                save_top_k=1,
+                mode="max" if cfg.stop_criterion == "auroc" else "min",
+            )
+    
+
+            trainer = pl.Trainer(
+                logger=[logger, csv_logger],
+                precision="16-mixed",
+                accumulate_grad_batches=cfg.accumulate_grad_batches,
+                gradient_clip_val=1,
+                callbacks=[checkpoint_callback],#StochasticWeightAveraging(swa_lrs=4.0e-05)], #
+                max_epochs=cfg.num_epochs,
+                devices=1,
+                accelerator="gpu"
+            )
+
+            results_val = trainer.fit(
+                model,
+                train_dataloader,
+                val_dataloader,
+                ckpt_path=cfg.resume,
+            )
+
+            results_test = trainer.test(
+                model,
+                test_dataloader,
+                ckpt_path="best",
+            )
+
+
+            model.outputs.to_csv(result_path / f"fold{i}" / f"outputs.csv")
+            model.stain_importance.to_csv( result_path / f"fold{i}" / f"stain_eval.csv")
+            model_outputs = pd.concat([model_outputs, model.outputs],ignore_index=True)
+
+            logger.log_table(
+                key="results",
+                columns=[k for k in results_test[0].keys()],
+                data=[[v for v in results_test[0].values()]],
+            )
+
+            # Convert the dictionary to a DataFrame with specified index
+            results_df = pd.DataFrame(results_test[0],index=[0])
+
+            # Concatenate performance_summaries and results_df
+            performance_summaries = pd.concat([performance_summaries, results_df], ignore_index=True)
+
+            wandb.finish()  # required for new wandb run in next fold
 
     summary_logger = WandbLogger(
         project=cfg.project,
